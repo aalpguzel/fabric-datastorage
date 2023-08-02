@@ -27,11 +27,20 @@ type SmartContract struct {
 
 // Asset describes main asset details that are visible to all organizations
 type Asset struct {
-	Type  string `json:"objectType"` //Type is used to distinguish the various types of objects in state database
-	ID    string `json:"assetID"`
-	Color string `json:"color"`
-	Size  int    `json:"size"`
-	Owner string `json:"owner"`
+	Type 	    string  `json:"objectType"` //Type is used to distinguish the various types of objects in state database
+	_id         string  `json:"_id"`
+        ID          string  `json:”assetID"`
+        DeviceID    string  `json:"DeviceID"`
+        SerialNo    string  `json:"SerialNo"`
+        RecorDate   string  `json:"RecorDate"`
+        Endeks      float64 `json:"Endeks"`
+        Flow        float64 `json:"Flow"`
+        Status      int     `json:"Status"`
+        AddingType  int     `json:"AddingType"`
+        Mode        int     `json:"Mode"`
+        OperationID string  `json:"OperationID"`
+        IsHourly    string  `json:"IsHourly"`
+	Owner 	    string  `json:"owner"`
 }
 
 // AssetPrivateDetails describes details that are private to owners
@@ -64,11 +73,20 @@ func (s *SmartContract) CreateAsset(ctx contractapi.TransactionContextInterface)
 	}
 
 	type assetTransientInput struct {
-		Type           string `json:"objectType"` //Type is used to distinguish the various types of objects in state database
-		ID             string `json:"assetID"`
-		Color          string `json:"color"`
-		Size           int    `json:"size"`
-		AppraisedValue int    `json:"appraisedValue"`
+		Type           string   `json:"objectType"` //Type is used to distinguish the various types of objects in state database
+		_id            string   `json:"_id"`
+        	ID             string   `json:”assetID"`
+        	DeviceID       string   `json:"DeviceID"`
+        	SerialNo       int      `json:"SerialNo"`
+        	RecorDate      string   `json:"RecorDate"`
+        	Endeks         float64  `json:"Endeks"`
+        	Flow           float64  `json:"Flow"`
+        	Status         int      `json:"Status"`
+        	AddingType     int      `json:"AddingType"`
+        	Mode           int      `json:"Mode"`
+        	OperationID    string   `json:"OperationID"`
+        	IsHourly       string   `json:"IsHourly"`
+		AppraisedValue int      `json:"appraisedValue"`
 	}
 
 	var assetInput assetTransientInput
@@ -76,19 +94,45 @@ func (s *SmartContract) CreateAsset(ctx contractapi.TransactionContextInterface)
 	if err != nil {
 		return fmt.Errorf("failed to unmarshal JSON: %v", err)
 	}
-
 	if len(assetInput.Type) == 0 {
 		return fmt.Errorf("objectType field must be a non-empty string")
+	}
+	if len(assetInput._id) == 0 {
+		return fmt.Errorf("_id field must be a non-empty string")
 	}
 	if len(assetInput.ID) == 0 {
 		return fmt.Errorf("assetID field must be a non-empty string")
 	}
-	if len(assetInput.Color) == 0 {
-		return fmt.Errorf("color field must be a non-empty string")
+	if len(assetInput.DeviceID) == 0 {
+		return fmt.Errorf("DeviceID field must be a non-empty string")
 	}
-	if assetInput.Size <= 0 {
-		return fmt.Errorf("size field must be a positive integer")
-	}
+	if len(assetInput.SerialNo) == 0 {
+                return fmt.Errorf("SerialNo field must be a non-empty string")
+        }
+	if len(assetInput.RecorDate) == 0 {
+                return fmt.Errorf("RecorDate field must be a non-empty string")
+        }
+	 if assetInput.Endeks <= 0 {
+                return fmt.Errorf("Endeks field must be a positive integer")
+        }
+        if assetInput.Flow <= 0 {
+                return fmt.Errorf("Flow field must be a positive integer")
+        }
+	if assetInput.Status <= 0 {
+                return fmt.Errorf("Status field must be a positive integer")
+        }
+	if assetInput.AddingType <= 0 {
+                return fmt.Errorf("AddingType field must be a positive integer")
+        }
+	if assetInput.Mode <= 0 {
+                return fmt.Errorf("Mode field must be a positive integer")
+        }
+	if len(assetInput.OperationID) == 0 {
+                return fmt.Errorf("OperationID field must be a non-empty string")
+        }
+	if len(assetInput.IsHourly) == 0 {
+                return fmt.Errorf("IsHourly field must be a non-empty string")
+        }
 	if assetInput.AppraisedValue <= 0 {
 		return fmt.Errorf("appraisedValue field must be a positive integer")
 	}
@@ -118,11 +162,20 @@ func (s *SmartContract) CreateAsset(ctx contractapi.TransactionContextInterface)
 
 	// Make submitting client the owner
 	asset := Asset{
-		Type:  assetInput.Type,
-		ID:    assetInput.ID,
-		Color: assetInput.Color,
-		Size:  assetInput.Size,
-		Owner: clientID,
+		Type:  	      assetInput.Type,
+		_id:          assetInput._id,
+       		ID: 	      assetInput.ID,
+        	DeviceID:     assetInput.DeviceID,
+     		SerialNo:     assetInput.SerialNo,
+         	RecorDate:    assetInput.RecorDate,
+        	Endeks:       assetInput.Endeks,
+        	Flow:         assetInput.Flow,
+        	Status:       assetInput.Status,
+        	AddingType:   assetInput.AddingType,
+        	Mode:         assetInput.Mode,
+        	OperationID:  assetInput.OperationID,
+        	IsHourly:     assetInput.IsHourly,
+                Owner:	      clientID,
 	}
 	assetJSONasBytes, err := json.Marshal(asset)
 	if err != nil {
