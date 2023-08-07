@@ -146,34 +146,34 @@ func (t *SimpleChaincode) CreateAsset(ctx contractapi.TransactionContextInterfac
 	//  The key is a composite key, with the elements that you want to range query on listed first.
 	//  In our case, the composite key is based on indexName~color~name.
 	//  This will enable very efficient state range queries based on composite keys matching indexName~color~*
-// 	colorNameIndexKey, err := ctx.GetStub().CreateCompositeKey(index, []string{asset.Color, asset.ID})
-// 	if err != nil {
-// 		return err
-// 	}
-// 	//  Save index entry to world state. Only the key name is needed, no need to store a duplicate copy of the asset.
-// 	//  Note - passing a 'nil' value will effectively delete the key from state, therefore we pass null character as value
-// 	value := []byte{0x00}
-// 	return ctx.GetStub().PutState(colorNameIndexKey, value)
-// }
+	deviceIDIndexKey, err := ctx.GetStub().CreateCompositeKey(index, []string{asset.DeviceID, asset.ID})
+	if err != nil {
+		return err
+	}
+	//  Save index entry to world state. Only the key name is needed, no need to store a duplicate copy of the asset.
+	//  Note - passing a 'nil' value will effectively delete the key from state, therefore we pass null character as value
+	value := []byte{0x00}
+	return ctx.GetStub().PutState(deviceIDIndexKey, value)
+}
 
-// // ReadAsset retrieves an asset from the ledger
-// func (t *SimpleChaincode) ReadAsset(ctx contractapi.TransactionContextInterface, assetID string) (*Asset, error) {
-// 	assetBytes, err := ctx.GetStub().GetState(assetID)
-// 	if err != nil {
-// 		return nil, fmt.Errorf("failed to get asset %s: %v", assetID, err)
-// 	}
-// 	if assetBytes == nil {
-// 		return nil, fmt.Errorf("asset %s does not exist", assetID)
-// 	}
+// ReadAsset retrieves an asset from the ledger
+func (t *SimpleChaincode) ReadAsset(ctx contractapi.TransactionContextInterface, assetID string) (*Asset, error) {
+	assetBytes, err := ctx.GetStub().GetState(assetID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get asset %s: %v", assetID, err)
+	}
+	if assetBytes == nil {
+		return nil, fmt.Errorf("asset %s does not exist", assetID)
+	}
 
-// 	var asset Asset
-// 	err = json.Unmarshal(assetBytes, &asset)
-// 	if err != nil {
-// 		return nil, err
-// 	}
+	var asset Asset
+	err = json.Unmarshal(assetBytes, &asset)
+	if err != nil {
+		return nil, err
+	}
 
-// 	return &asset, nil
-// }
+	return &asset, nil
+}
 
 // DeleteAsset removes an asset key-value pair from the ledger
 func (t *SimpleChaincode) DeleteAsset(ctx contractapi.TransactionContextInterface, assetID string) error {
@@ -187,30 +187,30 @@ func (t *SimpleChaincode) DeleteAsset(ctx contractapi.TransactionContextInterfac
 		return fmt.Errorf("failed to delete asset %s: %v", assetID, err)
 	}
 
-// colorNameIndexKey, err := ctx.GetStub().CreateCompositeKey(index, []string{asset.Color, asset.ID})
-// if err != nil {
-// 	return err
-// }
+deviceIDIndexKey, err := ctx.GetStub().CreateCompositeKey(index, []string{asset.DeviceID, asset.ID})
+if err != nil {
+	return err
+}
 
 	// Delete index entry
-	return ctx.GetStub().DelState(colorNameIndexKey)
+	return ctx.GetStub().DelState(deviceIDIndexKey)
 }
 
 // TransferAsset transfers an asset by setting a new owner name on the asset
-// func (t *SimpleChaincode) TransferAsset(ctx contractapi.TransactionContextInterface, assetID, newOwner string) error {
-// 	asset, err := t.ReadAsset(ctx, assetID)
-// 	if err != nil {
-// 		return err
-// 	}
+func (t *SimpleChaincode) TransferAsset(ctx contractapi.TransactionContextInterface, assetID, newDate string) error {
+	asset, err := t.ReadAsset(ctx, assetID)
+	if err != nil {
+		return err
+	}
 
-// 	asset.Owner = newOwner
-// 	assetBytes, err := json.Marshal(asset)
-// 	if err != nil {
-// 		return err
-// 	}
+	asset.RecorDate = newDate
+	assetBytes, err := json.Marshal(asset)
+	if err != nil {
+		return err
+	}
 
-// 	return ctx.GetStub().PutState(assetID, assetBytes)
-// }
+	return ctx.GetStub().PutState(assetID, assetBytes)
+}
 
 // constructQueryResponseFromIterator constructs a slice of assets from the resultsIterator
 func constructQueryResponseFromIterator(resultsIterator shim.StateQueryIteratorInterface) ([]*Asset, error) {
@@ -256,45 +256,45 @@ func (t *SimpleChaincode) GetAssetsByRange(ctx contractapi.TransactionContextInt
 // committing peers if the result set has changed between endorsement time and commit time.
 // Therefore, range queries are a safe option for performing update transactions based on query results.
 // Example: GetStateByPartialCompositeKey/RangeQuery
-// func (t *SimpleChaincode) TransferAssetByColor(ctx contractapi.TransactionContextInterface, color, newOwner string) error {
-// 	// Execute a key range query on all keys starting with 'color'
-// 	coloredAssetResultsIterator, err := ctx.GetStub().GetStateByPartialCompositeKey(index, []string{color})
-// 	if err != nil {
-// 		return err
-// 	}
-// 	defer coloredAssetResultsIterator.Close()
+func (t *SimpleChaincode) TransferAssetByColor(ctx contractapi.TransactionContextInterface, color, newDate string) error {
+	// Execute a key range query on all keys starting with 'color'
+	coloredAssetResultsIterator, err := ctx.GetStub().GetStateByPartialCompositeKey(index, []string{color})
+	if err != nil {
+		return err
+	}
+	defer coloredAssetResultsIterator.Close()
 
-// 	for coloredAssetResultsIterator.HasNext() {
-// 		responseRange, err := coloredAssetResultsIterator.Next()
-// 		if err != nil {
-// 			return err
-// 		}
+	for coloredAssetResultsIterator.HasNext() {
+		responseRange, err := coloredAssetResultsIterator.Next()
+		if err != nil {
+			return err
+		}
 
-// 		_, compositeKeyParts, err := ctx.GetStub().SplitCompositeKey(responseRange.Key)
-// 		if err != nil {
-// 			return err
-// 		}
+		_, compositeKeyParts, err := ctx.GetStub().SplitCompositeKey(responseRange.Key)
+		if err != nil {
+			return err
+		}
 
-// 		if len(compositeKeyParts) > 1 {
-// 			returnedAssetID := compositeKeyParts[1]
-// 			asset, err := t.ReadAsset(ctx, returnedAssetID)
-// 			if err != nil {
-// 				return err
-// 			}
-// 			asset.Owner = newOwner
-// 			assetBytes, err := json.Marshal(asset)
-// 			if err != nil {
-// 				return err
-// 			}
-// 			err = ctx.GetStub().PutState(returnedAssetID, assetBytes)
-// 			if err != nil {
-// 				return fmt.Errorf("transfer failed for asset %s: %v", returnedAssetID, err)
-// 			}
-// 		}
-// 	}
+		if len(compositeKeyParts) > 1 {
+			returnedAssetID := compositeKeyParts[1]
+			asset, err := t.ReadAsset(ctx, returnedAssetID)
+			if err != nil {
+				return err
+			}
+			asset.RecorDate = newDate
+			assetBytes, err := json.Marshal(asset)
+			if err != nil {
+				return err
+			}
+			err = ctx.GetStub().PutState(returnedAssetID, assetBytes)
+			if err != nil {
+				return fmt.Errorf("transfer failed for asset %s: %v", returnedAssetID, err)
+			}
+		}
+	}
 
-// 	return nil
-// }
+	return nil
+}
 
 // QueryAssetsByOwner queries for assets based on the owners name.
 // This is an example of a parameterized query where the query logic is baked into the chaincode,
