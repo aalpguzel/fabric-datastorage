@@ -88,13 +88,12 @@ type SimpleChaincode struct {
 }
 
 type Asset struct {
-
+	DocType        string `json:"docType"` //docType is used to distinguish the various types of objects in state database
 	ID             string `json:"ID"`      //the field tags are needed to keep case from bouncing around
-	DeviceID       string `json:"DeviceID"`
-	SerialNo           int    `json:"SerialNo"`
-	RecorDate          string `json:"RecorDate"`
-	Endeks 			float64    `json:"Endeks"`
-	Flow			float64	`json:"Flow"`
+	Color          string `json:"color"`
+	Size           int    `json:"size"`
+	Owner          string `json:"owner"`
+	AppraisedValue int    `json:"appraisedValue"`
 }
 
 // HistoryQueryResult structure used for returning result of history query
@@ -113,30 +112,29 @@ type PaginatedQueryResult struct {
 }
 
 // CreateAsset initializes a new asset in the ledger
-func (t *SimpleChaincode) CreateAsset(ctx contractapi.TransactionContextInterface, ID, deviceID string, serialNo int, recorDate string, endeks float64, flow float64) error {
-	exists, err := t.AssetExists(ctx, ID)
+func (t *SimpleChaincode) CreateAsset(ctx contractapi.TransactionContextInterface, assetID, color string, size int, owner string, appraisedValue int) error {
+	exists, err := t.AssetExists(ctx, assetID)
 	if err != nil {
 		return fmt.Errorf("failed to get asset: %v", err)
 	}
 	if exists {
-		return fmt.Errorf("asset already exists: %s", ID)
+		return fmt.Errorf("asset already exists: %s", assetID)
 	}
 
 	asset := &Asset{
 		DocType:        "asset",
-		ID:             ID,
-		DeviceID:       deviceID,
-		SerialNo:       serialNo,
-		RecorDate:      recorDate,
-		Endeks: 		endeks,
-		Flow:			flow,
+		ID:             assetID,
+		Color:          color,
+		Size:           size,
+		Owner:          owner,
+		AppraisedValue: appraisedValue,
 	}
 	assetBytes, err := json.Marshal(asset)
 	if err != nil {
 		return err
 	}
 
-	err = ctx.GetStub().PutState(ID, assetBytes)
+	err = ctx.GetStub().PutState(assetID, assetBytes)
 	if err != nil {
 		return err
 	}
@@ -146,24 +144,24 @@ func (t *SimpleChaincode) CreateAsset(ctx contractapi.TransactionContextInterfac
 	//  The key is a composite key, with the elements that you want to range query on listed first.
 	//  In our case, the composite key is based on indexName~color~name.
 	//  This will enable very efficient state range queries based on composite keys matching indexName~color~*
-	deviceIDIndexKey, err := ctx.GetStub().CreateCompositeKey(index, []string{asset.DeviceID, asset.ID})
+	colorNameIndexKey, err := ctx.GetStub().CreateCompositeKey(index, []string{asset.Color, asset.ID})
 	if err != nil {
 		return err
 	}
 	//  Save index entry to world state. Only the key name is needed, no need to store a duplicate copy of the asset.
 	//  Note - passing a 'nil' value will effectively delete the key from state, therefore we pass null character as value
 	value := []byte{0x00}
-	return ctx.GetStub().PutState(deviceIDIndexKey, value)
+	return ctx.GetStub().PutState(colorNameIndexKey, value)
 }
 
 // ReadAsset retrieves an asset from the ledger
-func (t *SimpleChaincode) ReadAsset(ctx contractapi.TransactionContextInterface, ID string) (*Asset, error) {
-	assetBytes, err := ctx.GetStub().GetState(ID)
+func (t *SimpleChaincode) ReadAsset(ctx contractapi.TransactionContextInterface, assetID string) (*Asset, error) {
+	assetBytes, err := ctx.GetStub().GetState(assetID)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get asset %s: %v", ID, err)
+		return nil, fmt.Errorf("failed to get asset %s: %v", assetID, err)
 	}
 	if assetBytes == nil {
-		return nil, fmt.Errorf("asset %s does not exist", ID)
+		return nil, fmt.Errorf("asset %s does not exist", assetID)
 	}
 
 	var asset Asset
@@ -177,23 +175,23 @@ func (t *SimpleChaincode) ReadAsset(ctx contractapi.TransactionContextInterface,
 
 // DeleteAsset removes an asset key-value pair from the ledger
 func (t *SimpleChaincode) DeleteAsset(ctx contractapi.TransactionContextInterface, assetID string) error {
-	asset, err := t.ReadAsset(ctx, ID)
+	asset, err := t.ReadAsset(ctx, assetID)
 	if err != nil {
 		return err
 	}
 
-	err = ctx.GetStub().DelState(ID)
+	err = ctx.GetStub().DelState(assetID)
 	if err != nil {
-		return fmt.Errorf("failed to delete asset %s: %v", ID, err)
+		return fmt.Errorf("failed to delete asset %s: %v", assetID, err)
 	}
 
-	deviceIDIndexKey, err := ctx.GetStub().CreateCompositeKey(index, []string{asset.DeviceID, asset.ID})
+	colorNameIndexKey, err := ctx.GetStub().CreateCompositeKey(index, []string{asset.Color, asset.ID})
 	if err != nil {
 		return err
 	}
 
 	// Delete index entry
-	return ctx.GetStub().DelState(deviceIDIndexKey)
+	return ctx.GetStub().DelState(colorNameIndexKey)
 }
 
 // TransferAsset transfers an asset by setting a new owner name on the asset
